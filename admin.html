@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PitchDrop — Admin</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="logo.png"/>
+  <style>
+    .page{max-width:1100px;margin:0 auto;padding:20px 16px 60px;}
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px;}
+    .stat{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:14px;}
+    .stat-num{font-size:24px;font-weight:800;color:var(--lime);}
+    .stat-label{font-size:11px;color:var(--muted);margin-top:3px;}
+    .asec{background:var(--s1);border:1px solid var(--border);border-radius:var(--r3);padding:16px;margin-bottom:14px;}
+    .asec-head{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+    #denied{display:none;text-align:center;padding:60px 20px;}
+    #adminContent{display:none;}
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="dashboard.html" class="nav-brand"><img src="logo.png" alt=""/>Pitch<em>Drop</em><span style="font-size:10px;color:var(--red);margin-left:6px;font-weight:800;">ADMIN</span></a>
+  <div class="nav-right">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="#" onclick="doLogout()" style="color:var(--muted);">Logout</a>
+  </div>
+</nav>
+
+<div id="denied"><div style="font-size:44px;margin-bottom:12px;">🚫</div><h2 style="color:var(--white);margin-bottom:8px;">Access Denied</h2><p style="color:var(--muted);">You don't have permission to view this page.</p><br/><a href="dashboard.html" class="btn btn-lime">Go to Dashboard</a></div>
+
+<div id="adminContent">
+  <div class="page">
+    <h1 style="font-size:17px;font-weight:700;margin-bottom:18px;">🛡️ Admin Panel</h1>
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-num" id="stUsers">—</div><div class="stat-label">Total Users</div></div>
+      <div class="stat"><div class="stat-num" id="stPaid">—</div><div class="stat-label">Paid Users</div></div>
+      <div class="stat"><div class="stat-num" id="stRev">—</div><div class="stat-label">Revenue USDT</div></div>
+      <div class="stat"><div class="stat-num" id="stEmails">—</div><div class="stat-label">Emails Generated</div></div>
+      <div class="stat"><div class="stat-num" id="stPays">—</div><div class="stat-label">Payments</div></div>
+    </div>
+    <div class="asec">
+      <div class="asec-head">👥 All Users</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;"><input type="text" id="usrSearch" class="inp" placeholder="Search by email..." oninput="filterUsers()" style="flex:1;"/></div>
+      <div class="table-wrap"><table><thead><tr><th>Email</th><th>Name</th><th>Plan</th><th>Credits</th><th>Generated</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead><tbody id="usersTbl"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">Loading...</td></tr></tbody></table></div>
+    </div>
+    <div class="asec">
+      <div class="asec-head">💳 All Payments</div>
+      <div class="table-wrap"><table><thead><tr><th>Date</th><th>Plan</th><th>Amount</th><th>Credits</th><th>Status</th></tr></thead><tbody id="paysTbl"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Loading...</td></tr></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOPUP PANEL -->
+<div class="panel-ov" id="topupOv" onclick="closeTopup()"></div>
+<div class="panel" id="topupPanel">
+  <div class="panel-head"><h3>💎 Add Credits</h3><button class="panel-x" onclick="closeTopup()">✕</button></div>
+  <div class="panel-body">
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">User: <strong id="topupEmail" style="color:var(--white);">—</strong></p>
+    <div class="field"><label>Credits to add</label><input type="number" id="topupAmt" class="inp" placeholder="e.g. 50" min="1"/></div>
+    <div style="display:flex;gap:8px;margin-top:12px;"><button class="btn btn-lime" onclick="confirmTopup()">Add Credits</button><button class="btn btn-ghost" onclick="closeTopup()">Cancel</button></div>
+  </div>
+</div>
+
+<script type="module">
+  import { supabase, isAdmin } from './supabase.js';
+  let allUsers=[], topupId=null;
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session){window.location.href='auth.html';}
+  const cu=session.user;
+  if(!isAdmin(cu.email)){document.getElementById('denied').style.display='block';}
+  else{document.getElementById('adminContent').style.display='block';await loadAll();}
+
+  async function loadAll(){await loadUsers();await loadPayments();}
+
+  async function loadUsers(){
+    const {data}=await supabase.from('users').select('*').order('created_at',{ascending:false});
+    if(!data)return;
+    allUsers=data;
+    let emails=0,paid=0;
+    allUsers.forEach(u=>{emails+=(u.generation_count||0);if(u.plan&&u.plan!=='free')paid++;});
+    document.getElementById('stUsers').textContent=allUsers.length;
+    document.getElementById('stEmails').textContent=emails;
+    document.getElementById('stPaid').textContent=paid;
+    renderUsers(allUsers);
+  }
+
+  function renderUsers(users){
+    const tb=document.getElementById('usersTbl');
+    if(!users.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">No users found</td></tr>';return;}
+    tb.innerHTML=users.map(u=>`<tr>
+      <td style="font-size:12px">${u.email||'—'}</td>
+      <td style="font-size:12px">${u.name||'—'}</td>
+      <td><span class="badge badge-muted">${u.plan||'free'}</span></td>
+      <td><strong style="color:var(--lime)">${u.credits>=999999?'∞':u.credits||0}</strong></td>
+      <td>${u.generation_count||0}</td>
+      <td style="font-size:11px;color:var(--muted)">${u.created_at?new Date(u.created_at).toLocaleDateString():'—'}</td>
+      <td><span class="badge ${u.suspended?'badge-red':'badge-green'}">${u.suspended?'Suspended':'Active'}</span></td>
+      <td><div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="openTopup('${u.id}','${u.email}')">+ Credits</button>
+        <button class="btn btn-sm ${u.suspended?'btn-lime':'btn-danger'}" onclick="toggleSus('${u.id}',${u.suspended})">${u.suspended?'Unsuspend':'Suspend'}</button>
+      </div></td>
+    </tr>`).join('');
+  }
+
+  async function loadPayments(){
+    const {data}=await supabase.from('payments').select('*').order('created_at',{ascending:false});
+    if(!data)return;
+    let rev=0;data.forEach(p=>rev+=parseFloat(p.amount||0));
+    document.getElementById('stRev').textContent=rev.toFixed(0);
+    document.getElementById('stPays').textContent=data.length;
+    const tb=document.getElementById('paysTbl');
+    if(!data.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">No payments yet</td></tr>';return;}
+    tb.innerHTML=data.map(p=>`<tr>
+      <td style="font-size:12px">${p.created_at?new Date(p.created_at).toLocaleDateString():'—'}</td>
+      <td><span class="badge badge-muted">${p.plan||'—'}</span></td>
+      <td><strong style="color:var(--lime)">${p.amount} USDT</strong></td>
+      <td>${p.credits>=999999?'∞':p.credits}</td>
+      <td><span class="badge badge-green">${p.status||'—'}</span></td>
+    </tr>`).join('');
+  }
+
+  window.filterUsers=()=>{const q=document.getElementById('usrSearch').value.toLowerCase();renderUsers(allUsers.filter(u=>u.email?.toLowerCase().includes(q)||u.name?.toLowerCase().includes(q)));};
+  window.openTopup=(id,email)=>{topupId=id;document.getElementById('topupEmail').textContent=email;document.getElementById('topupAmt').value='';document.getElementById('topupOv').classList.add('open');document.getElementById('topupPanel').classList.add('open');};
+  window.closeTopup=()=>{document.getElementById('topupOv').classList.remove('open');document.getElementById('topupPanel').classList.remove('open');topupId=null;};
+  window.confirmTopup=async()=>{const amt=parseInt(document.getElementById('topupAmt').value);if(!amt||amt<1)return alert('Enter a valid amount');const u=allUsers.find(x=>x.id===topupId);await supabase.from('users').update({credits:(u?.credits||0)+amt}).eq('id',topupId);alert(`✅ Added ${amt} credits`);closeTopup();loadUsers();};
+  window.toggleSus=async(id,isSus)=>{if(!confirm(isSus?'Unsuspend this user?':'Suspend this user?'))return;await supabase.from('users').update({suspended:!isSus}).eq('id',id);loadUsers();};
+  window.doLogout=async()=>{await supabase.auth.signOut();window.location.href='auth.html';};
+</script>
+</body>
+</html>

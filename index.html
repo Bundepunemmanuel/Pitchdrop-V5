@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PitchDrop — Cold Emails That Get Replies</title>
+  <meta name="description" content="4-stage AI pipeline turns any website into 3 personalized cold emails in seconds. Pay with USDT."/>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="logo.png"/>
+  <style>
+    .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 20px 48px;text-align:center;position:relative;overflow:hidden;}
+    .hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(200,241,53,0.06) 0%,transparent 65%);pointer-events:none;}
+    .hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--s2) 1px,transparent 1px),linear-gradient(90deg,var(--s2) 1px,transparent 1px);background-size:52px 52px;opacity:0.22;pointer-events:none;mask-image:radial-gradient(ellipse at center,black 15%,transparent 72%);}
+    .hero-in{position:relative;z-index:1;max-width:760px;width:100%;}
+    .htag{display:inline-flex;align-items:center;gap:5px;background:rgba(200,241,53,0.07);border:1px solid rgba(200,241,53,0.18);color:var(--lime);padding:4px 13px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:20px;}
+    .hero h1{font-size:clamp(28px,6vw,60px);font-weight:800;letter-spacing:-1.5px;margin-bottom:14px;line-height:1.1;}
+    .hero h1 em{color:var(--lime);font-style:normal;}
+    .hero p{font-size:clamp(14px,2.5vw,17px);color:var(--white2);max-width:480px;margin:0 auto 28px;line-height:1.6;}
+    .hero-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+    .stats-row{display:flex;gap:28px;justify-content:center;margin-top:36px;flex-wrap:wrap;}
+    .stat-i{text-align:center;}
+    .stat-n{font-size:24px;font-weight:800;color:var(--lime);}
+    .stat-l{font-size:12px;color:var(--muted);margin-top:2px;}
+    .sec{padding:56px 20px;}
+    .sec-in{max-width:1000px;margin:0 auto;}
+    .stag{display:inline-block;background:rgba(200,241,53,0.07);color:var(--lime);padding:3px 11px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;border:1px solid rgba(200,241,53,0.14);}
+    .stitle{font-size:clamp(20px,4vw,34px);font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;}
+    .ssub{font-size:14px;color:var(--white2);max-width:440px;line-height:1.6;}
+    .grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:28px;}
+    .step-c{background:var(--s1);border:1px solid var(--border);border-radius:var(--r3);padding:20px;transition:var(--t);}
+    .step-c:hover{border-color:rgba(200,241,53,0.18);transform:translateY(-2px);}
+    .step-n{font-size:32px;font-weight:800;color:rgba(200,241,53,0.1);margin-bottom:8px;line-height:1;}
+    .step-c h3{font-size:14px;font-weight:700;margin-bottom:5px;}
+    .step-c p{font-size:12px;color:var(--white2);line-height:1.6;}
+    .plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:28px;}
+    .pc{background:var(--s1);border:2px solid var(--border);border-radius:var(--r3);padding:18px;position:relative;transition:var(--t);}
+    .pc:hover{transform:translateY(-2px);}
+    .pc.pop{border-color:rgba(200,241,53,0.25);}
+    .pop-t{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--lime);color:#000;font-size:10px;font-weight:800;padding:2px 11px;border-radius:999px;white-space:nowrap;}
+    .pn{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:5px;}
+    .pp{font-size:26px;font-weight:800;color:var(--white);letter-spacing:-0.5px;}
+    .pp span{font-size:11px;color:var(--muted);font-weight:400;letter-spacing:0;}
+    .pd{font-size:11px;color:var(--muted);margin:4px 0 10px;}
+    .pf{list-style:none;}
+    .pf li{font-size:11px;color:var(--white2);padding:3px 0;display:flex;align-items:center;gap:5px;}
+    .pf li::before{content:'✓';color:var(--lime);font-weight:800;font-size:10px;flex-shrink:0;}
+    .compare-wrap{overflow-x:auto;border-radius:var(--r3);border:1px solid var(--border);margin-top:24px;}
+    .ctable{width:100%;border-collapse:collapse;min-width:480px;}
+    .ctable th{padding:11px 14px;font-size:11px;font-weight:700;text-align:center;border-bottom:1px solid var(--border);background:var(--s2);color:var(--muted);}
+    .ctable th:first-child{text-align:left;}
+    .ctable th.ours{background:rgba(200,241,53,0.05);color:var(--lime);}
+    .ctable td{padding:10px 14px;font-size:12px;text-align:center;border-bottom:1px solid var(--s2);color:var(--muted);}
+    .ctable td:first-child{text-align:left;font-weight:600;color:var(--white2);}
+    .ctable td.ours{color:var(--white);font-weight:700;}
+    .ctable tr:last-child td{border-bottom:none;}
+    .ck{color:var(--green);} .cx{color:var(--s3);}
+    footer{border-top:1px solid var(--border);padding:24px 20px;text-align:center;color:var(--muted);}
+    .fbrand{display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:10px;font-weight:800;font-size:16px;color:var(--white);}
+    .fbrand img{height:22px;}
+    .fbrand em{color:var(--lime);font-style:normal;}
+    .flinks{display:flex;gap:18px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;}
+    .flinks a{font-size:12px;color:var(--muted);transition:var(--t);}
+    .flinks a:hover{color:var(--lime);}
+    @media(max-width:600px){.sec{padding:44px 14px;}.hero{padding:52px 14px 36px;}.stats-row{gap:18px;}}
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="nav-brand"><img src="logo.png" alt=""/>Pitch<em>Drop</em></a>
+  <div class="nav-right">
+    <a href="#features" class="hide-sm">Features</a>
+    <a href="#pricing" class="hide-sm">Pricing</a>
+    <a href="auth.html" class="btn btn-outline btn-sm">Login</a>
+    <a href="auth.html" class="btn btn-lime btn-sm">Get Started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div><div class="hero-grid"></div>
+  <div class="hero-in">
+    <div class="htag">⚡ 4-Stage AI Pipeline · Results in seconds</div>
+    <h1>Cold emails that<br/><em>actually get replies</em></h1>
+    <p>Paste any website URL. Our AI extracts signals, reasons like a senior SDR, and writes 3 emails your competitors can't match.</p>
+    <div class="hero-cta">
+      <a href="auth.html" class="btn btn-lime btn-lg">Start free — 3 emails</a>
+      <a href="#how" class="btn btn-ghost btn-lg">See how it works</a>
+    </div>
+    <div class="stats-row">
+      <div class="stat-i"><div class="stat-n">&lt;15s</div><div class="stat-l">Generation time</div></div>
+      <div class="stat-i"><div class="stat-n">3</div><div class="stat-l">Unique variants</div></div>
+      <div class="stat-i"><div class="stat-n">$10</div><div class="stat-l">Starting $10 USDT</div>
+      <div class="stat-i"><div class="stat-n">4</div><div class="stat-l">AI pipeline stages</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section class="sec" id="how">
+  <div class="sec-in">
+    <div class="stag">How it works</div>
+    <h2 class="stitle">4 stages. Not a GPT wrapper.</h2>
+    <p class="ssub">Every other tool sends your URL to an AI and says "write a cold email." We do four focused stages instead.</p>
+    <div class="grid4">
+      <div class="step-c"><div class="step-n">01</div><h3>Intelligence Extraction</h3><p>Answers 15 specific questions about the company — recent changes, CEO, metrics, hiring signals, brand tone. Never guesses.</p></div>
+      <div class="step-c"><div class="step-n">02</div><h3>SDR Reasoning</h3><p>Before writing, reasons like a top SDR: what's the hook, what's their pain, what makes NOW the right time? No competitor does this step.</p></div>
+      <div class="step-c"><div class="step-n">03</div><h3>Email Writing</h3><p>Writes 3 structurally different emails — different openings, different angles, different approaches. Not just tone changes.</p></div>
+      <div class="step-c"><div class="step-n">04</div><h3>Real Scoring</h3><p>Algorithmic scoring based on actual email content. Spam scan, length check, signal usage, subject specificity. No fake scores.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section class="sec" id="features" style="background:var(--s1);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="sec-in">
+    <div class="stag">Comparison</div>
+    <h2 class="stitle">Why not Clay, SmartWriter, Instantly?</h2>
+    <p class="ssub">Overpriced. Overengineered. Won't accept your payment.</p>
+    <div class="compare-wrap">
+      <table class="ctable">
+        <thead><tr><th>Feature</th><th class="ours">PitchDrop</th><th>Clay</th><th>SmartWriter</th><th>Instantly</th></tr></thead>
+        <tbody>
+          <tr><td>Starting price</td><td class="ours">$10 USDT/mo</td><td>$185/mo</td><td>$59/mo</td><td>$97/mo</td></tr>
+          <tr><td>USDT payment</td><td class="ours"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>SDR reasoning step</td><td class="ours"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Real algorithmic scoring</td><td class="ours"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>3 structurally different variants</td><td class="ours"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Works globally</td><td class="ours"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Free trial</td><td class="ours">3 emails</td><td>Limited</td><td><span class="cx">✗</span></td><td>Trial</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="sec" id="pricing">
+  <div class="sec-in">
+    <div class="stag">Pricing</div>
+    <h2 class="stitle">Pay in USDT. No card needed.</h2>
+    <p class="ssub">Works from anywhere Stripe doesn't.</p>
+    <div class="plans-grid">
+      <div class="pc"><div class="pn">Free</div><div class="pp">$0</div><div class="pd">3 generations</div><ul class="pf"><li>3 free generations</li><li>3 variants each</li><li>Real scoring</li></ul><br/><a href="auth.html" class="btn btn-outline btn-full" style="font-size:13px;">Start free</a></div>
+      <div class="pc"><div class="pn">Starter</div><div class="pp">$10 <span>USDT/mo</span></div><div class="pd">50 generations/month</div><ul class="pf"><li>50/month</li><li>4-stage pipeline</li><li>Follow-ups</li><li>History</li></ul><br/><a href="auth.html" class="btn btn-ghost btn-full" style="font-size:13px;">Get Starter</a></div>
+      <div class="pc pop"><div class="pop-t">⚡ Popular</div><div class="pn">Pro</div><div class="pp">$20 <span>USDT/mo</span></div><div class="pd">150 generations/month</div><ul class="pf"><li>150/month</li><li>Everything in Starter</li><li>Signal display</li><li>Share to social</li></ul><br/><a href="auth.html" class="btn btn-lime btn-full" style="font-size:13px;">Get Pro</a></div>
+      <div class="pc"><div class="pn">Lifetime</div><div class="pp">$99 <span>once</span></div><div class="pd">Unlimited · Forever</div><ul class="pf"><li>Unlimited</li><li>Everything in Pro</li><li>Pay once</li><li>All future features</li></ul><br/><a href="auth.html" class="btn btn-ghost btn-full" style="font-size:13px;">Get Lifetime</a></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fbrand"><img src="logo.png" alt=""/>Pitch<em>Drop</em></div>
+  <div class="flinks"><a href="index.html">Home</a><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="auth.html">Login</a></div>
+  <p style="font-size:12px;">© 2026 PitchDrop · Built for global cold emailers · Pay with USDT</p>
+</footer>
+</body>
+</html>

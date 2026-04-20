@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PitchDrop — Dashboard</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="logo.png"/>
+  <style>
+    .dash{max-width:720px;margin:0 auto;padding:20px 16px 60px;}
+    .dash-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+    .gen-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r3);padding:18px;margin-bottom:18px;}
+    .url-row{display:flex;gap:10px;}
+    .url-row .inp{flex:1;height:46px;font-size:15px;}
+    .url-row .btn{height:46px;flex-shrink:0;padding:0 18px;}
+    .prefs-bar{display:flex;align-items:center;justify-content:space-between;background:rgba(200,241,53,0.04);border:1px solid rgba(200,241,53,0.12);border-radius:var(--r);padding:8px 12px;margin-top:10px;font-size:13px;color:var(--white2);flex-wrap:wrap;gap:6px;}
+    .prefs-bar button{background:none;border:none;color:var(--lime);font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+    .step2{display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px;animation:slideD .2s ease both;}
+    @keyframes slideD{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+    .url-locked{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:9px 12px;margin-bottom:12px;gap:8px;}
+    .url-locked .ut{font-size:13px;font-weight:600;color:var(--white);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .url-locked button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;white-space:nowrap;flex-shrink:0;}
+    .url-locked button:hover{color:var(--white);}
+    .q-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:12px;}
+    .loading-sec{display:none;padding:18px 0;}
+    .lsteps-list{display:flex;flex-direction:column;gap:4px;margin-top:10px;max-width:360px;margin-left:auto;margin-right:auto;}
+    .low-signal{background:rgba(252,211,77,0.05);border:1px solid rgba(252,211,77,0.2);border-radius:var(--r2);padding:12px;margin-top:10px;}
+    .low-signal h4{font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:6px;}
+    .low-signal p{font-size:12px;color:var(--white2);margin-bottom:8px;line-height:1.5;}
+    .low-signal textarea{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:9px;font-size:13px;color:var(--white);font-family:'Inter',sans-serif;line-height:1.5;resize:none;outline:none;min-height:64px;}
+    .low-signal textarea:focus{border-color:var(--lime);}
+    .results-sec{display:none;}
+    .results-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+    .results-hd h2{font-size:15px;font-weight:700;}
+    .sigs-sec{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:11px 13px;margin-bottom:12px;}
+    .score-sum{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+    .score-big{font-size:26px;font-weight:800;}
+    .score-high{color:var(--green);} .score-mid{color:var(--yellow);} .score-low{color:var(--red);}
+    .score-toggle{background:none;border:none;color:var(--lime);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;padding:0;margin-bottom:8px;}
+    .score-body{display:none;padding-top:10px;border-top:1px solid var(--border);margin-top:4px;}
+    .score-body.open{display:block;}
+    .score-note{font-size:11px;color:var(--muted);font-style:italic;margin-top:5px;}
+    .bench-note{font-size:11px;color:var(--lime);font-weight:600;margin-top:3px;}
+    .vcontent{display:none;}
+    .vcontent.active{display:block;animation:fadeIn .18s ease;}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    .email-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+    .deliv-box{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:11px 13px;margin-top:12px;}
+    .deliv-item{display:flex;align-items:flex-start;gap:6px;font-size:12px;color:var(--white2);padding:4px 0;border-bottom:1px solid var(--border);}
+    .deliv-item:last-child{border-bottom:none;}
+    .deliv-item::before{content:'→';color:var(--lime);font-weight:700;flex-shrink:0;}
+    .no-creds{background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.2);border-radius:var(--r2);padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+    .no-creds p{font-size:13px;color:var(--red);font-weight:500;}
+    .recent-sec{margin-top:20px;}
+    .recent-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+    .recent-top h2{font-size:14px;font-weight:700;}
+    .recent-top a{font-size:13px;color:var(--lime);font-weight:600;}
+    @media(max-width:600px){.dash{padding:12px 10px 60px;}.gen-card{padding:14px;}.url-row{flex-direction:column;}.url-row .btn{width:100%;height:44px;}.email-actions .btn{font-size:12px;padding:7px 10px;}}
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="nav-brand"><img src="logo.png" alt=""/>Pitch<em>Drop</em></a>
+  <div class="nav-right">
+    <div class="credits-pill">💎 <span class="n" id="creditCount">—</span><span class="hide-xs"> credits</span></div>
+    <a href="pricing.html" class="btn btn-lime btn-sm">Upgrade</a>
+    <a href="history.html" class="hide-sm">History</a>
+    <a href="account.html" class="hide-sm">Account</a>
+    <a id="adminLink" href="admin.html" style="display:none;color:var(--red);font-weight:700;">Admin</a>
+    <a href="#" onclick="doLogout()">Logout</a>
+  </div>
+</nav>
+
+<div class="dash">
+  <div class="dash-top">
+    <div>
+      <h1 style="font-size:17px;font-weight:700;">Hey <span id="userName" style="color:var(--lime);">there</span> 👋</h1>
+      <p style="font-size:12px;color:var(--muted);margin-top:2px;">Generate cold emails that actually get replies</p>
+    </div>
+    <span class="badge badge-muted" id="planBadge">Free Plan</span>
+  </div>
+
+  <div class="no-creds" id="noCredsBanner" style="display:none;">
+    <p>You've used all your credits. Upgrade to keep generating.</p>
+    <a href="pricing.html" class="btn btn-lime btn-sm">Upgrade →</a>
+  </div>
+
+  <div class="gen-card">
+    <!-- STEP 1 -->
+    <div id="step1">
+      <div class="sec-label">Step 1 — Paste prospect website URL</div>
+      <div class="url-row mt-8">
+        <input type="url" id="prospectUrl" class="inp" placeholder="https://yourprospect.com"/>
+        <button class="btn btn-lime" onclick="goStep2()" id="nextBtn">Next →</button>
+      </div>
+      <div class="prefs-bar" id="prefsBar" style="display:none;">
+        🧠 Using saved preferences <button onclick="showStep2()">Change →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step2" id="step2">
+      <div class="url-locked">
+        <span class="ut" id="lockedUrl">—</span>
+        <button onclick="backStep1()">← Change</button>
+      </div>
+      <div class="sec-label mb-8">Step 2 — Your context</div>
+      <div class="q-grid">
+        <div class="field"><label>What are you selling?</label><input type="text" id="q_sell" class="inp" placeholder="e.g. Logistics software"/></div>
+        <div class="field"><label>Goal</label><select id="q_goal" class="inp"><option>Book a call</option><option>Get a reply</option><option>Make a sale</option><option>Get a demo</option></select></div>
+        <div class="field"><label>Tone</label><select id="q_tone" class="inp"><option>Professional</option><option>Casual</option><option>Bold</option><option>Friendly</option></select></div>
+        <div class="field"><label>Length</label><select id="q_len" class="inp"><option>Short</option><option>Medium</option><option>Long</option></select></div>
+        <div class="field"><label>Prospect role</label><select id="q_role" class="inp"><option>CEO / Founder</option><option>Marketing Manager</option><option>Sales Manager</option><option>Developer / CTO</option><option>HR Manager</option><option>Other</option></select></div>
+      </div>
+      <button class="btn btn-lime btn-full btn-lg" onclick="startGen()" id="genBtn">⚡ Generate emails — 1 credit</button>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading-sec" id="loadingSec">
+      <div class="bar mt-8"><div class="bar-fill"></div></div>
+      <div class="lsteps-list">
+        <div class="lstep" id="l1"><span class="lstep-icon">🔍</span><div class="lstep-main">Reading website...<div class="lstep-detail">Fetching content</div><div id="foundSigs"></div></div></div>
+        <div class="lstep" id="l2"><span class="lstep-icon">🧠</span><div class="lstep-main">Reasoning like a senior SDR...<div class="lstep-detail">Finding hook and angle</div></div></div>
+        <div class="lstep" id="l3"><span class="lstep-icon">✍️</span><div class="lstep-main">Writing 3 different emails...<div class="lstep-detail">Professional · Casual · Bold</div></div></div>
+        <div class="lstep" id="l4"><span class="lstep-icon">📊</span><div class="lstep-main">Scoring & subject lines...<div class="lstep-detail">Algorithmic scoring</div></div></div>
+      </div>
+    </div>
+
+    <!-- LOW SIGNAL -->
+    <div class="low-signal" id="lowSig" style="display:none;">
+      <h4>⚠️ Low personalization detected</h4>
+      <p>Not enough specific signals found. Your email was generated but may feel generic. Add context to improve it.</p>
+      <textarea id="manualCtx" placeholder="Add context: CEO name, recent news, funding round, specific product launched..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-lime btn-sm" onclick="retryCtx()">Retry with context</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('lowSig').style.display='none'">Use anyway</button>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results-sec" id="resultsSec">
+      <div class="results-hd">
+        <h2>✅ Emails ready</h2>
+        <button class="btn btn-outline btn-sm" onclick="resetGen()">↩ New URL</button>
+      </div>
+      <div class="sigs-sec" id="sigsSec" style="display:none;">
+        <div class="sec-label mb-8">🔍 Signals extracted</div>
+        <div class="sigs" id="sigsList"></div>
+      </div>
+      <div class="tabs mb-12" id="varTabs">
+        <button class="tab active" onclick="switchV(0)">💼 Professional</button>
+        <button class="tab" onclick="switchV(1)">😊 Casual</button>
+        <button class="tab" onclick="switchV(2)">🔥 Bold</button>
+      </div>
+      <div id="vc0" class="vcontent active"></div>
+      <div id="vc1" class="vcontent"></div>
+      <div id="vc2" class="vcontent"></div>
+      <div class="deliv-box" id="delivBox" style="display:none;">
+        <div class="sec-label mb-8">🛡️ Deliverability tips</div>
+        <div id="delivList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECENT -->
+  <div class="recent-sec">
+    <div class="recent-top">
+      <h2>📚 Recent generations</h2>
+      <a href="history.html">View all →</a>
+    </div>
+    <div id="recentList"><div class="card-sm text-center" style="color:var(--muted);font-size:13px;">No emails yet. Generate your first one above!</div></div>
+  </div>
+</div>
+
+<!-- SHARE SHEET -->
+<div class="share-bd" id="shareBd" onclick="closeShare()"></div>
+<div class="share-sheet" id="shareSheet">
+  <div class="share-title">Share your result</div>
+  <div class="share-grid">
+    <div class="share-opt" onclick="shareX()"><div class="si">𝕏</div><div class="sl">X / Twitter</div></div>
+    <div class="share-opt" onclick="shareLI()"><div class="si">💼</div><div class="sl">LinkedIn</div></div>
+    <div class="share-opt" onclick="shareTG()"><div class="si">✈️</div><div class="sl">Telegram</div></div>
+    <div class="share-opt" onclick="shareCopy()"><div class="si">📋</div><div class="sl">Copy text</div></div>
+  </div>
+  <button class="btn btn-ghost btn-full" onclick="closeShare()">Cancel</button>
+</div>
+
+<!-- FOLLOW UP PANEL -->
+<div class="panel-ov" id="fuOv" onclick="closeFu()"></div>
+<div class="panel" id="fuPanel">
+  <div class="panel-head"><h3>📨 Generate Follow-up</h3><button class="panel-x" onclick="closeFu()">✕</button></div>
+  <div class="panel-body">
+    <div class="field"><label>Days since sent</label><select id="fuDays" class="inp"><option value="3">3 days</option><option value="5">5 days</option><option value="7">7 days</option><option value="14">14 days</option></select></div>
+    <button class="btn btn-lime btn-full mt-8" onclick="runFu()" id="fuGenBtn">Generate follow-up emails</button>
+    <div id="fuResults" class="mt-16"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { supabase, isAdmin } from './supabase.js';
+
+  let cu=null, ud=null, variants=[], curUrl='', delivTips=[], activeV=0, shareIdx=0, fuIdx=0;
+
+  const {data:{session}} = await supabase.auth.getSession();
+  if (!session) { window.location.href='auth.html'; }
+  cu = session.user;
+  await loadUser();
+  await loadRecent();
+  if (isAdmin(cu.email)) document.getElementById('adminLink').style.display='inline';
+
+  async function loadUser() {
+    const {data} = await supabase.from('users').select('*').eq('id',cu.id).single();
+    if (!data) return;
+    ud = data;
+    document.getElementById('userName').textContent = (ud.name||'there').split(' ')[0];
+    document.getElementById('creditCount').textContent = ud.credits>=999999?'∞':ud.credits;
+    document.getElementById('planBadge').textContent = cap(ud.plan)+' Plan';
+    if ((ud.credits||0)<=0) document.getElementById('noCredsBanner').style.display='flex';
+    checkPrefs();
+  }
+
+  function checkPrefs() {
+    const ok = ud?.preferences && (ud?.preference_count||0)>=3;
+    document.getElementById('prefsBar').style.display = ok?'flex':'none';
+    if (ud?.preferences) fillQ(ud.preferences);
+  }
+
+  function fillQ(p) {
+    if (p.selling) document.getElementById('q_sell').value=p.selling;
+    if (p.goal) document.getElementById('q_goal').value=p.goal;
+    if (p.tone) document.getElementById('q_tone').value=p.tone;
+    if (p.length) document.getElementById('q_len').value=p.length;
+    if (p.role) document.getElementById('q_role').value=p.role;
+  }
+
+  window.goStep2 = () => {
+    const url = document.getElementById('prospectUrl').value.trim();
+    if (!url) return toast('Please paste a prospect URL','error');
+    if (!url.startsWith('http')) return toast('URL must start with https://','error');
+    if ((ud?.credits||0)<=0) { window.location.href='pricing.html'; return; }
+    if (ud?.preferences && (ud?.preference_count||0)>=3) { startGen(url, ud.preferences); }
+    else { document.getElementById('lockedUrl').textContent=url; document.getElementById('step1').style.display='none'; document.getElementById('step2').style.display='block'; }
+  };
+
+  window.showStep2 = () => {
+    const url = document.getElementById('prospectUrl').value.trim();
+    if (!url) return toast('Paste a URL first','error');
+    document.getElementById('lockedUrl').textContent=url;
+    document.getElementById('step1').style.display='none';
+    document.getElementById('step2').style.display='block';
+    if (ud?.preferences) fillQ(ud.preferences);
+  };
+
+  window.backStep1 = () => { document.getElementById('step2').style.display='none'; document.getElementById('step1').style.display='block'; };
+
+  window.startGen = async (directUrl, directPrefs) => {
+    const url = directUrl || document.getElementById('prospectUrl').value.trim();
+    const prefs = directPrefs || { selling:document.getElementById('q_sell').value.trim()||'a B2B service', goal:document.getElementById('q_goal').value, tone:document.getElementById('q_tone').value, length:document.getElementById('q_len').value, role:document.getElementById('q_role').value };
+    curUrl = url;
+    showLoading();
+    const steps=['l1','l2','l3','l4'];
+    let idx=0;
+    const timer = setInterval(()=>{ if(idx>0){const e=document.getElementById(steps[idx-1]);if(e)e.className='lstep done';} if(idx<steps.length){const e=document.getElementById(steps[idx]);if(e)e.className='lstep active';idx++;} }, 3500);
+    try {
+      const res = await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,preferences:prefs})});
+      clearInterval(timer); steps.forEach(s=>{const e=document.getElementById(s);if(e)e.className='lstep';});
+      if (!res.ok) { const t=await res.text(); throw new Error(t.slice(0,120)); }
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error||'Generation failed');
+      variants=result.data.variants; delivTips=result.data.deliverabilityTips||[];
+      const sigs=result.data.extractedSignals||[];
+      if (sigs.length) { const sf=document.getElementById('foundSigs'); if(sf) sf.innerHTML=sigs.map(s=>`<div class="found-sig">✓ ${s}</div>`).join(''); }
+      if (result.data.lowPersonalization) document.getElementById('lowSig').style.display='block';
+      renderResults(variants,sigs,delivTips);
+      hideLoading(); document.getElementById('resultsSec').style.display='block';
+      const nc=Math.max(0,(ud.credits||0)-1), npc=(ud.preference_count||0)+1;
+      await supabase.from('users').update({credits:nc,generation_count:(ud.generation_count||0)+1,preference_count:npc,preferences:prefs}).eq('id',cu.id);
+      ud.credits=nc; ud.preference_count=npc; ud.preferences=prefs;
+      document.getElementById('creditCount').textContent=nc>=999999?'∞':nc;
+      if (nc<=0) document.getElementById('noCredsBanner').style.display='flex';
+      await supabase.from('history').insert({user_id:cu.id,url,preferences:prefs,variants,signals:sigs});
+      await loadRecent();
+    } catch(e) {
+      clearInterval(timer); steps.forEach(s=>{const el=document.getElementById(s);if(el)el.className='lstep';});
+      hideLoading(); resetGen(); toast('Generation failed: '+e.message,'error');
+    }
+  };
+
+  window.retryCtx = () => {
+    const ctx=document.getElementById('manualCtx').value.trim();
+    if (!ctx) return toast('Add context first','error');
+    document.getElementById('lowSig').style.display='none';
+    document.getElementById('resultsSec').style.display='none';
+    const prefs = ud?.preferences || {selling:'a B2B service',goal:'Book a call',tone:'Professional',length:'Short',role:'CEO'};
+    showLoading();
+    fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:curUrl,preferences:prefs,manualContext:ctx})})
+      .then(r=>r.json()).then(result=>{
+        if(!result.success) throw new Error(result.error);
+        variants=result.data.variants; delivTips=result.data.deliverabilityTips||[];
+        renderResults(variants,result.data.extractedSignals||[],delivTips);
+        hideLoading(); document.getElementById('resultsSec').style.display='block';
+      }).catch(e=>{ hideLoading(); toast(e.message,'error'); });
+  };
+
+  function renderResults(vs, sigs, tips) {
+    if (sigs.length) { document.getElementById('sigsSec').style.display='block'; document.getElementById('sigsList').innerHTML=sigs.map(s=>`<span class="sig">${s}</span>`).join(''); }
+    vs.forEach((v,i)=>{ document.getElementById(`vc${i}`).innerHTML=buildVariant(v,i); });
+    if (tips.length) { document.getElementById('delivBox').style.display='block'; document.getElementById('delivList').innerHTML=tips.map(t=>`<div class="deliv-item">${t}</div>`).join(''); }
+    switchV(0);
+  }
+
+  function buildVariant(v, i) {
+    const sc = v.replyScore>=80?'high':v.replyScore>=65?'mid':'low';
+    const bd = v.scoreBreakdown;
+    return `
+      <div class="score-sum">
+        <span class="score-big score-${sc}">${v.replyScore}</span>
+        <span style="font-size:13px;color:var(--muted);">/100</span>
+        <span class="badge ${v.spamSafe?'badge-green':'badge-red'}">${v.spamSafe?'🛡️ Spam safe':'⚠️ Spam risk'}</span>
+      </div>
+      <button class="score-toggle" onclick="toggleScore(${i})">📊 Score breakdown ▾</button>
+      <div class="score-body" id="sb${i}">
+        <div class="sbars mt-8">
+          ${[['Personalization',bd?.personalization,30],['Spam safety',bd?.spamSafety,20],['Human patterns',bd?.humanPatterns,15],['Length vs goal',bd?.lengthVsGoal,20],['Subject strength',bd?.subjectStrength,15]].map(([l,vv,max])=>`
+            <div class="sbar"><div class="sbar-n">${l}</div><div class="sbar-t"><div class="sbar-f" style="width:${((vv||0)/max)*100}%"></div></div><div class="sbar-v">${vv||0}/${max}</div></div>`).join('')}
+        </div>
+        ${bd?.note?`<div class="score-note">${bd.note}</div>`:''}
+        ${v.benchmarkNote?`<div class="bench-note">📈 ${v.benchmarkNote}</div>`:''}
+      </div>
+      <div class="divider"></div>
+      <div class="sec-label mb-8">Subject lines</div>
+      ${v.subjects.map(s=>`<div class="sub-row"><span>${s}</span><button class="btn btn-ghost btn-sm" onclick="copyTxt('${s.replace(/'/g,"\\'").replace(/"/g,'\\"')}')">Copy</button></div>`).join('')}
+      <div class="sec-label mt-12 mb-8">Email body</div>
+      <div class="email-box" id="eb${i}" contenteditable="false">${v.body.replace(/\n/g,'<br/>')}</div>
+      <div class="email-actions">
+        <button class="btn btn-lime btn-sm" onclick="copyEmail(${i})">📋 Copy</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleEdit(${i})" id="editBtn${i}">✏️ Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="openShare(${i})">📤 Share</button>
+        <button class="btn btn-ghost btn-sm" onclick="openFu(${i})">📨 Follow up</button>
+      </div>`;
+  }
+
+  window.switchV = (i) => { activeV=i; document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i)); document.querySelectorAll('.vcontent').forEach((c,j)=>c.classList.toggle('active',j===i)); };
+  window.toggleScore = (i) => { document.getElementById(`sb${i}`)?.classList.toggle('open'); };
+  window.copyEmail = (i) => { navigator.clipboard.writeText(document.getElementById(`eb${i}`)?.innerText||''); toast('Copied!','success'); };
+  window.copyTxt = (t) => { navigator.clipboard.writeText(t); toast('Copied!','success'); };
+  window.toggleEdit = (i) => { const b=document.getElementById(`eb${i}`),btn=document.getElementById(`editBtn${i}`); const ed=b.contentEditable==='true'; b.contentEditable=ed?'false':'true'; btn.textContent=ed?'✏️ Edit':'💾 Done'; if(!ed)b.focus(); };
+
+  // SHARE
+  window.openShare = (i) => { shareIdx=i; document.getElementById('shareBd').classList.add('open'); document.getElementById('shareSheet').classList.add('open'); };
+  window.closeShare = () => { document.getElementById('shareBd').classList.remove('open'); document.getElementById('shareSheet').classList.remove('open'); };
+  function getShareText() { const v=variants[shareIdx]; return v?`Generated a ${v.replyScore}/100 reply-score cold email for ${curUrl} with PitchDrop 🔥\n\nSubject: "${v.subjects?.[0]}"\n\nTry free → ${window.location.origin}`:''; }
+  window.shareX = () => { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(getShareText().slice(0,280))}`,'_blank'); closeShare(); };
+  window.shareLI = () => { window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}`,'_blank'); closeShare(); };
+  window.shareTG = () => { window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(getShareText())}`,'_blank'); closeShare(); };
+  window.shareCopy = () => { navigator.clipboard.writeText(getShareText()); toast('Share text copied!','success'); closeShare(); };
+
+  // FOLLOW UP
+  window.openFu = (i) => { fuIdx=i; document.getElementById('fuResults').innerHTML=''; document.getElementById('fuOv').classList.add('open'); document.getElementById('fuPanel').classList.add('open'); };
+  window.closeFu = () => { document.getElementById('fuOv').classList.remove('open'); document.getElementById('fuPanel').classList.remove('open'); };
+  window.runFu = async () => {
+    const btn=document.getElementById('fuGenBtn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> Generating...';
+    const body=document.getElementById(`eb${fuIdx}`)?.innerText||'';
+    const days=document.getElementById('fuDays').value;
+    try {
+      const res=await fetch('/api/followup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({originalEmail:body,prospectUrl:curUrl,daysSince:parseInt(days),originalSubject:variants[fuIdx]?.subjects?.[0]||''})});
+      if(!res.ok) throw new Error('Failed');
+      const data=await res.json();
+      if(!data.success) throw new Error(data.error);
+      const fus=data.data.followups||[];
+      document.getElementById('fuResults').innerHTML=fus.map((f,i)=>`
+        <div class="card-sm mt-12">
+          <div class="sec-label mb-6">Follow-up ${i+1}${f.angle?' — '+f.angle:''}</div>
+          ${f.subjects.map(s=>`<div class="sub-row mb-6"><span>${s}</span><button class="btn btn-ghost btn-sm" onclick="copyTxt('${s.replace(/'/g,"\\'")}')">Copy</button></div>`).join('')}
+          <div class="email-box" style="min-height:60px;font-size:13px;">${(f.body||'').replace(/\n/g,'<br/>')}</div>
+          <button class="btn btn-lime btn-sm mt-8" onclick="copyTxt('${(f.body||'').replace(/'/g,"\\'").replace(/\n/g,'\\n')}')">📋 Copy</button>
+        </div>`).join('');
+    } catch(e) { document.getElementById('fuResults').innerHTML=`<div class="alert alert-error">${e.message}</div>`; }
+    btn.disabled=false; btn.innerHTML='Generate follow-up emails';
+  };
+
+  window.resetGen = () => {
+    document.getElementById('resultsSec').style.display='none'; document.getElementById('sigsSec').style.display='none';
+    document.getElementById('delivBox').style.display='none'; document.getElementById('lowSig').style.display='none';
+    document.getElementById('step2').style.display='none'; document.getElementById('step1').style.display='block';
+    document.getElementById('prospectUrl').value=''; checkPrefs();
+  };
+
+  function showLoading() { document.getElementById('step1').style.display='none'; document.getElementById('step2').style.display='none'; document.getElementById('resultsSec').style.display='none'; document.getElementById('loadingSec').style.display='block'; ['l1','l2','l3','l4'].forEach(s=>{const e=document.getElementById(s);if(e)e.className='lstep';}); document.getElementById('foundSigs').innerHTML=''; }
+  function hideLoading() { document.getElementById('loadingSec').style.display='none'; }
+
+  async function loadRecent() {
+    const {data} = await supabase.from('history').select('id,url,variants,created_at').eq('user_id',cu.id).order('created_at',{ascending:false}).limit(3);
+    const list=document.getElementById('recentList');
+    if (!data?.length) { list.innerHTML=`<div class="card-sm text-center" style="color:var(--muted);font-size:13px;">No emails yet. Generate your first one!</div>`; return; }
+    list.innerHTML=data.map(d=>{
+      const score=d.variants?.[0]?.replyScore||0; const sc=score>=80?'badge-green':score>=65?'badge-yellow':'badge-red';
+      return `<div class="hist-card"><div class="hist-top"><span class="hist-url">🔗 ${d.url}</span><div class="hist-meta"><span class="badge ${sc}">${score}/100</span><span style="font-size:11px;color:var(--muted);">${new Date(d.created_at).toLocaleDateString()}</span></div></div><div class="hist-preview">${(d.variants?.[0]?.body||'').replace(/<[^>]+>/g,'').slice(0,100)}...</div><div class="hist-actions"><a href="history.html" class="btn btn-ghost btn-sm">View all history →</a></div></div>`;
+    }).join('');
+  }
+
+  window.doLogout = async () => { await supabase.auth.signOut(); window.location.href='auth.html'; };
+  window.toast = (msg,type='info') => {
+    const ex=document.getElementById('_toast'); if(ex) ex.remove();
+    const el=document.createElement('div'); el.id='_toast';
+    el.style.cssText=`position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--border2);color:var(--white);padding:9px 18px;border-radius:var(--r2);font-size:13px;font-weight:500;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);`;
+    if(type==='error') el.style.borderColor='var(--red)'; if(type==='success') el.style.borderColor='var(--green)';
+    el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),3000);
+  };
+  function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
+</script>
+</body>
+</html>

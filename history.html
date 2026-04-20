@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PitchDrop — History</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="logo.png"/>
+  <style>
+    .page{max-width:720px;margin:0 auto;padding:20px 16px 60px;}
+    .page-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+    .search-bar{display:flex;gap:8px;margin-bottom:14px;}
+    .search-bar .inp{flex:1;}
+    .empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+    .empty-state .ei{font-size:36px;margin-bottom:10px;}
+    .edit-area{display:none;margin-top:10px;}
+    .edit-area textarea{width:100%;min-height:90px;padding:10px;background:var(--s2);border:1.5px solid var(--lime);border-radius:var(--r);font-family:'Inter',sans-serif;font-size:13px;color:var(--white);line-height:1.6;resize:vertical;outline:none;}
+    .edit-actions{display:flex;gap:6px;margin-top:6px;}
+    /* PANEL STYLES */
+    .ptabs{margin-bottom:12px;}
+    .pscore{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+    .psubject-row{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;margin-bottom:5px;gap:8px;}
+    .psubject-row span{font-size:13px;color:var(--white2);flex:1;}
+    .pemail{background:var(--s2);border:1.5px solid var(--border);border-radius:var(--r2);padding:13px;font-size:14px;color:var(--white2);line-height:1.8;white-space:pre-wrap;min-height:100px;outline:none;transition:var(--t);}
+    .pemail[contenteditable="true"]{border-color:var(--lime);}
+    .pactions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+    .fu-sec{margin-top:18px;border-top:1px solid var(--border);padding-top:14px;}
+    @media(max-width:600px){.page{padding:12px 10px 60px;}.hist-actions .btn{font-size:11px;padding:6px 8px;}}
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="dashboard.html" class="nav-brand"><img src="logo.png" alt=""/>Pitch<em>Drop</em></a>
+  <div class="nav-right">
+    <a href="dashboard.html" class="btn btn-ghost btn-sm">← Dashboard</a>
+    <a href="account.html" class="hide-sm">Account</a>
+    <a id="adminLink" href="admin.html" style="display:none;color:var(--red);font-weight:700;">Admin</a>
+    <a href="#" onclick="doLogout()">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-top">
+    <div>
+      <h1 style="font-size:17px;font-weight:700;">📚 Email History</h1>
+      <p style="font-size:12px;color:var(--muted);margin-top:2px;">All your generated cold emails</p>
+    </div>
+    <a href="dashboard.html" class="btn btn-lime btn-sm">+ New email</a>
+  </div>
+  <div class="search-bar">
+    <input type="text" id="searchInp" class="inp" placeholder="Search by URL..." oninput="filterHist()"/>
+  </div>
+  <div id="histList"><div class="empty-state"><div class="ei">⏳</div><p>Loading...</p></div></div>
+</div>
+
+<!-- VIEW PANEL -->
+<div class="panel-ov" id="panelOv" onclick="closePanel()"></div>
+<div class="panel" id="viewPanel">
+  <div class="panel-head">
+    <h3 id="panelTitle" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;">Email</h3>
+    <button class="panel-x" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</div>
+
+<!-- SHARE SHEET -->
+<div class="share-bd" id="shareBd" onclick="closeShare()"></div>
+<div class="share-sheet" id="shareSheet">
+  <div class="share-title">Share your result</div>
+  <div class="share-grid">
+    <div class="share-opt" onclick="shareX()"><div class="si">𝕏</div><div class="sl">X / Twitter</div></div>
+    <div class="share-opt" onclick="shareLI()"><div class="si">💼</div><div class="sl">LinkedIn</div></div>
+    <div class="share-opt" onclick="shareTG()"><div class="si">✈️</div><div class="sl">Telegram</div></div>
+    <div class="share-opt" onclick="shareCopy()"><div class="si">📋</div><div class="sl">Copy text</div></div>
+  </div>
+  <button class="btn btn-ghost btn-full" onclick="closeShare()">Cancel</button>
+</div>
+
+<script type="module">
+  import { supabase, isAdmin } from './supabase.js';
+  let cu=null, allHist=[], panelItem=null, panelVI=0, shareEmail='', shareUrl='', shareScore=0;
+
+  const {data:{session}} = await supabase.auth.getSession();
+  if (!session) { window.location.href='auth.html'; }
+  cu = session.user;
+  if (isAdmin(cu.email)) document.getElementById('adminLink').style.display='inline';
+  await loadAll();
+
+  async function loadAll() {
+    const {data} = await supabase.from('history').select('*').eq('user_id',cu.id).order('created_at',{ascending:false});
+    allHist = data || [];
+    render(allHist);
+  }
+
+  function render(items) {
+    const list = document.getElementById('histList');
+    if (!items.length) {
+      list.innerHTML=`<div class="empty-state"><div class="ei">📭</div><p>No emails yet.</p><br/><a href="dashboard.html" class="btn btn-lime btn-sm">Generate your first →</a></div>`;
+      return;
+    }
+    list.innerHTML = items.map(d => {
+      const score = d.variants?.[0]?.replyScore||0;
+      const sc = score>=80?'badge-green':score>=65?'badge-yellow':'badge-red';
+      const date = new Date(d.created_at).toLocaleDateString();
+      const preview = (d.variants?.[0]?.body||'').replace(/<[^>]+>/g,'').slice(0,110)+'...';
+      return `<div class="hist-card" id="hc_${d.id}">
+        <div class="hist-top">
+          <span class="hist-url">🔗 ${d.url}</span>
+          <div class="hist-meta"><span class="badge ${sc}">${score}/100</span><span style="font-size:11px;color:var(--muted);">${date}</span></div>
+        </div>
+        <div class="hist-preview">${preview}</div>
+        <div class="hist-actions">
+          <button class="btn btn-ghost btn-sm" onclick="viewItem('${d.id}')">👁 View</button>
+          <button class="btn btn-ghost btn-sm" onclick="openFuPanel('${d.id}')">📨 Follow up</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleEdit('${d.id}')">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="delItem('${d.id}')">🗑 Delete</button>
+        </div>
+        <div class="edit-area" id="ea_${d.id}">
+          <textarea id="et_${d.id}">${d.variants?.[0]?.body||''}</textarea>
+          <div class="edit-actions">
+            <button class="btn btn-lime btn-sm" onclick="saveEdit('${d.id}')">💾 Save</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleEdit('${d.id}')">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.filterHist = () => {
+    const q = document.getElementById('searchInp').value.toLowerCase();
+    render(allHist.filter(d => d.url?.toLowerCase().includes(q)));
+  };
+
+  window.viewItem = (id) => {
+    panelItem = allHist.find(x=>x.id===id);
+    if (!panelItem) return;
+    panelVI = 0;
+    document.getElementById('panelTitle').textContent = panelItem.url;
+    renderPanel(0);
+    document.getElementById('panelOv').classList.add('open');
+    document.getElementById('viewPanel').classList.add('open');
+  };
+
+  function renderPanel(vi) {
+    panelVI = vi;
+    const vs = panelItem?.variants||[];
+    const v = vs[vi]||vs[0];
+    if (!v) return;
+    shareEmail=v.body||''; shareUrl=panelItem?.url||''; shareScore=v.replyScore||0;
+    const sc = v.replyScore>=80?'badge-green':v.replyScore>=65?'badge-yellow':'badge-red';
+    const big = v.replyScore>=80?'score-high':v.replyScore>=65?'score-mid':'score-low';
+
+    document.getElementById('panelBody').innerHTML = `
+      ${vs.length>1?`<div class="ptabs"><div class="tabs">${vs.map((va,i)=>`<button class="tab ${i===vi?'active':''}" onclick="renderPanel(${i})">${va.type}</button>`).join('')}</div></div>`:''}
+      <div class="pscore">
+        <span class="score-big ${big}">${v.replyScore}</span>
+        <span style="color:var(--muted);font-size:13px;">/100</span>
+        <span class="badge ${sc}">${v.spamSafe?'🛡️ Spam safe':'⚠️ Risk'}</span>
+      </div>
+      <div class="sec-label mb-6">Subject lines</div>
+      <div>${(v.subjects||[]).map(s=>`<div class="psubject-row"><span>${s}</span><button class="btn btn-ghost btn-sm" onclick="cp('${s.replace(/'/g,"\\'").replace(/"/g,'\\"')}')">Copy</button></div>`).join('')}</div>
+      <div class="sec-label mt-12 mb-6">Email body</div>
+      <div class="pemail" id="pemail" contenteditable="false">${(v.body||'').replace(/\n/g,'<br/>')}</div>
+      <div class="pactions">
+        <button class="btn btn-lime btn-sm" onclick="cp(document.getElementById('pemail').innerText)">📋 Copy</button>
+        <button class="btn btn-ghost btn-sm" onclick="togglePEdit()" id="pEditBtn">✏️ Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="openShare()">📤 Share</button>
+      </div>
+      <div class="fu-sec">
+        <div class="sec-label mb-8">📨 Generate follow-up</div>
+        <div class="field"><label>Days since sent</label><select id="pFuDays" class="inp"><option value="3">3 days</option><option value="5">5 days</option><option value="7">7 days</option></select></div>
+        <button class="btn btn-lime btn-full mt-8" onclick="runPanelFu('${panelItem.id}',${vi})" id="pFuBtn">Generate follow-up</button>
+        <div id="pFuOut" class="mt-12"></div>
+      </div>`;
+    window._renderPanel = renderPanel;
+  }
+  window.renderPanel = renderPanel;
+
+  window.togglePEdit = () => {
+    const b=document.getElementById('pemail'), btn=document.getElementById('pEditBtn');
+    const ed=b.contentEditable==='true'; b.contentEditable=ed?'false':'true'; btn.textContent=ed?'✏️ Edit':'💾 Done'; if(!ed)b.focus();
+  };
+
+  window.runPanelFu = async (id, vi) => {
+    const btn=document.getElementById('pFuBtn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+    const item=allHist.find(x=>x.id===id); const v=item?.variants?.[vi]||item?.variants?.[0];
+    const days=document.getElementById('pFuDays')?.value||'4';
+    try {
+      const res=await fetch('/api/followup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({originalEmail:v?.body||'',prospectUrl:item?.url||'',daysSince:parseInt(days),originalSubject:v?.subjects?.[0]||''})});
+      const data=await res.json();
+      if(!data.success) throw new Error(data.error);
+      const fus=data.data.followups||[];
+      document.getElementById('pFuOut').innerHTML=fus.map((f,i)=>`
+        <div class="card-sm mt-8">
+          <div class="sec-label mb-6">Follow-up ${i+1}${f.angle?' — '+f.angle:''}</div>
+          ${f.subjects.map(s=>`<div class="psubject-row"><span>${s}</span><button class="btn btn-ghost btn-sm" onclick="cp('${s.replace(/'/g,"\\'")}')">Copy</button></div>`).join('')}
+          <div class="pemail" style="font-size:13px;">${(f.body||'').replace(/\n/g,'<br/>')}</div>
+          <button class="btn btn-lime btn-sm mt-8" onclick="cp('${(f.body||'').replace(/'/g,"\\'").replace(/\n/g,'\\n')}')">📋 Copy</button>
+        </div>`).join('');
+    } catch(e){document.getElementById('pFuOut').innerHTML=`<div class="alert alert-error">${e.message}</div>`;}
+    btn.disabled=false; btn.innerHTML='Generate follow-up';
+  };
+
+  window.openFuPanel = (id) => { viewItem(id); };
+  window.closePanel = () => { document.getElementById('panelOv').classList.remove('open'); document.getElementById('viewPanel').classList.remove('open'); };
+  window.toggleEdit = (id) => { const ea=document.getElementById(`ea_${id}`); ea.style.display=ea.style.display==='block'?'none':'block'; };
+  window.saveEdit = async (id) => {
+    const txt=document.getElementById(`et_${id}`).value;
+    const item=allHist.find(x=>x.id===id); if(!item) return;
+    const vs=[...(item.variants||[])]; if(vs[0]) vs[0].body=txt;
+    await supabase.from('history').update({variants:vs}).eq('id',id);
+    toast('Saved!','success'); document.getElementById(`ea_${id}`).style.display='none'; await loadAll();
+  };
+  window.delItem = async (id) => {
+    if(!confirm('Delete this email?')) return;
+    await supabase.from('history').delete().eq('id',id);
+    allHist=allHist.filter(x=>x.id!==id); render(allHist);
+  };
+  window.openShare = () => { document.getElementById('shareBd').classList.add('open'); document.getElementById('shareSheet').classList.add('open'); };
+  window.closeShare = () => { document.getElementById('shareBd').classList.remove('open'); document.getElementById('shareSheet').classList.remove('open'); };
+  function getShareText(){return `Generated a ${shareScore}/100 reply-score cold email for ${shareUrl} with PitchDrop 🔥\n\nTry free → ${window.location.origin}`;}
+  window.shareX=()=>{window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(getShareText().slice(0,280))}`,'_blank');closeShare();};
+  window.shareLI=()=>{window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}`,'_blank');closeShare();};
+  window.shareTG=()=>{window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(getShareText())}`,'_blank');closeShare();};
+  window.shareCopy=()=>{navigator.clipboard.writeText(getShareText());toast('Copied!','success');closeShare();};
+  window.cp=(t)=>{navigator.clipboard.writeText(t);toast('Copied!','success');};
+  window.doLogout=async()=>{await supabase.auth.signOut();window.location.href='auth.html';};
+  window.toast=(msg,type='info')=>{const ex=document.getElementById('_t');if(ex)ex.remove();const el=document.createElement('div');el.id='_t';el.style.cssText=`position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--border2);color:var(--white);padding:9px 18px;border-radius:var(--r2);font-size:13px;font-weight:500;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);`;if(type==='error')el.style.borderColor='var(--red)';if(type==='success')el.style.borderColor='var(--green)';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),3000);};
+</script>
+</body>
+</html>

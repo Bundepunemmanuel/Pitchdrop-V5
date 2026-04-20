@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PitchDrop — Pricing</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="logo.png"/>
+  <style>
+    .page{max-width:860px;margin:0 auto;padding:28px 16px 60px;}
+    .page-top{text-align:center;margin-bottom:28px;}
+    .page-top h1{font-size:clamp(22px,4vw,36px);font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;}
+    .page-top p{font-size:15px;color:var(--white2);}
+    .usdt-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(200,241,53,0.07);border:1px solid rgba(200,241,53,0.18);color:var(--lime);padding:4px 13px;border-radius:999px;font-size:12px;font-weight:700;margin-top:8px;}
+    .plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:22px;}
+    .plan{background:var(--s1);border:2px solid var(--border);border-radius:var(--r3);padding:20px;cursor:pointer;transition:var(--t);position:relative;}
+    .plan:hover{border-color:var(--border2);transform:translateY(-2px);}
+    .plan.sel{border-color:var(--lime);box-shadow:0 0 20px rgba(200,241,53,0.08);}
+    .plan.pop{border-color:rgba(200,241,53,0.2);}
+    .pop-tag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--lime);color:#000;font-size:10px;font-weight:800;padding:2px 11px;border-radius:999px;white-space:nowrap;}
+    .pname{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:5px;}
+    .pprice{font-size:30px;font-weight:800;color:var(--white);letter-spacing:-0.5px;line-height:1;}
+    .pprice span{font-size:11px;color:var(--muted);font-weight:400;letter-spacing:0;}
+    .pdesc{font-size:12px;color:var(--muted);margin:5px 0 12px;}
+    .pfeats{list-style:none;}
+    .pfeats li{font-size:12px;color:var(--white2);padding:3px 0;display:flex;align-items:center;gap:6px;}
+    .pfeats li::before{content:'✓';color:var(--lime);font-weight:800;font-size:10px;flex-shrink:0;}
+    .proceed{text-align:center;}
+    .success-box{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:var(--r2);padding:20px;max-width:420px;margin:0 auto 20px;text-align:center;display:none;}
+    .success-box h2{font-size:20px;font-weight:700;color:var(--green);margin-bottom:8px;}
+    .success-box p{font-size:14px;color:var(--white2);}
+    .poll-status{font-size:13px;color:var(--muted);margin-top:10px;}
+    @media(max-width:480px){.page{padding:18px 10px 60px;}}
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="dashboard.html" class="nav-brand"><img src="logo.png" alt=""/>Pitch<em>Drop</em></a>
+  <div class="nav-right">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="account.html" class="hide-sm">Account</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div id="alertBox" style="max-width:420px;margin:0 auto 14px;"></div>
+
+  <!-- SUCCESS STATE (after returning from NOWPayments) -->
+  <div class="success-box" id="successBox">
+    <h2>✅ Payment Submitted!</h2>
+    <p>Your credits will be added automatically once the blockchain confirms (1-3 minutes).</p>
+    <div class="poll-status" id="pollStatus">Checking payment status...</div>
+    <br/><a href="dashboard.html" class="btn btn-lime btn-full">Go to Dashboard</a>
+  </div>
+
+  <!-- PLAN SELECTION -->
+  <div id="planSection">
+    <div class="page-top">
+      <h1>Choose Your Plan</h1>
+      <p>Pay with USDT — no card, no Stripe, works anywhere in the world.</p>
+      <div class="usdt-pill">💎 USDT TRC-20 · Near-zero fees · Works globally</div>
+    </div>
+
+    <div class="plans-grid">
+      <!-- FREE -->
+      <div class="plan" onclick="selPlan('free')">
+        <div class="pname">Free</div>
+        <div class="pprice">$0</div>
+        <div class="pdesc">3 generations to start</div>
+        <ul class="pfeats">
+          <li>3 free generations</li>
+          <li>3 variants each</li>
+          <li>Real reply scoring</li>
+          <li>Spam checker</li>
+        </ul>
+      </div>
+      <!-- STARTER -->
+      <div class="plan" id="plan_starter" onclick="selPlan('starter')">
+        <div class="pname">Starter</div>
+        <div class="pprice">$10 <span>USDT/mo</span></div>
+        <div class="pdesc">50 generations/month</div>
+        <ul class="pfeats">
+          <li>50 generations/month</li>
+          <li>4-stage AI pipeline</li>
+          <li>Score breakdown</li>
+          <li>Follow-up generator</li>
+          <li>Email history</li>
+        </ul>
+      </div>
+      <!-- PRO -->
+      <div class="plan pop" id="plan_pro" onclick="selPlan('pro')">
+        <div class="pop-tag">⚡ Most popular</div>
+        <div class="pname">Pro</div>
+        <div class="pprice">$20 <span>USDT/mo</span></div>
+        <div class="pdesc">150 generations/month</div>
+        <ul class="pfeats">
+          <li>150 generations/month</li>
+          <li>Everything in Starter</li>
+          <li>Signal extraction display</li>
+          <li>Share to social</li>
+          <li>Deliverability tips</li>
+        </ul>
+      </div>
+      <!-- LIFETIME -->
+      <div class="plan" id="plan_lifetime" onclick="selPlan('lifetime')">
+        <div class="pname">Lifetime</div>
+        <div class="pprice">$99 <span>once</span></div>
+        <div class="pdesc">Unlimited · Forever</div>
+        <ul class="pfeats">
+          <li>Unlimited generations</li>
+          <li>Everything in Pro</li>
+          <li>Pay once, use forever</li>
+          <li>All future features</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="proceed">
+      <div id="proceedBox" style="display:none;">
+        <button class="btn btn-lime btn-lg" onclick="proceed()" id="proceedBtn">
+          💎 Pay with USDT
+        </button>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px;">
+          Opens NOWPayments secure checkout — select your crypto and pay
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { supabase } from './supabase.js';
+
+  const PLAN_CREDITS = { starter: 50, pro: 150, lifetime: 999999 };
+  let cu = null, selPlanId = null, pollInt = null;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; }
+  cu = session.user;
+
+  // Check if returning from NOWPayments payment page
+  const params = new URLSearchParams(window.location.search);
+  const returnStatus = params.get('status');
+  const returnPlan = params.get('plan');
+
+  if (returnStatus === 'success' && returnPlan) {
+    document.getElementById('planSection').style.display = 'none';
+    document.getElementById('successBox').style.display = 'block';
+    startPolling(returnPlan);
+  }
+
+  function startPolling(plan) {
+    const expected = PLAN_CREDITS[plan] || 50;
+    let attempts = 0;
+    pollInt = setInterval(async () => {
+      attempts++;
+      try {
+        const { data: ud } = await supabase.from('users').select('credits,plan').eq('id', cu.id).single();
+        if (ud?.plan === plan && ud?.credits >= expected) {
+          clearInterval(pollInt);
+          document.getElementById('pollStatus').textContent = '✅ Credits added! Redirecting...';
+          document.getElementById('pollStatus').style.color = 'var(--green)';
+          setTimeout(() => window.location.href = 'dashboard.html', 2000);
+          return;
+        }
+      } catch (_) {}
+      if (attempts > 36) { // 3 minutes
+        clearInterval(pollInt);
+        document.getElementById('pollStatus').textContent = 'If you paid, credits will appear within 5 minutes. Check your dashboard.';
+      } else {
+        document.getElementById('pollStatus').textContent = `Checking... (${attempts * 5}s)`;
+      }
+    }, 5000);
+  }
+
+  window.selPlan = (plan) => {
+    if (plan === 'free') return;
+    selPlanId = plan;
+    document.querySelectorAll('.plan').forEach(c => c.classList.remove('sel'));
+    document.getElementById(`plan_${plan}`)?.classList.add('sel');
+    document.getElementById('proceedBox').style.display = 'block';
+    document.getElementById('alertBox').innerHTML = '';
+  };
+
+  window.proceed = async () => {
+    if (!selPlanId || !cu) return;
+    const btn = document.getElementById('proceedBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Creating invoice...';
+
+    try {
+      const res = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: cu.id, plan: selPlanId })
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t.slice(0, 150));
+      }
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Failed to create invoice');
+
+      // Redirect to NOWPayments hosted payment page (like the screenshot)
+      window.location.href = data.invoiceUrl;
+
+    } catch (e) {
+      document.getElementById('alertBox').innerHTML = `<div class="alert alert-error">❌ ${e.message}</div>`;
+      btn.disabled = false;
+      btn.innerHTML = '💎 Pay with USDT';
+    }
+  };
+</script>
+</body>
+</html>

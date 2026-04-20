@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PitchDrop — Sign Up / Sign In</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="logo.png"/>
+  <style>
+    body{display:flex;min-height:100vh;}
+    .left{flex:1;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;padding:48px;position:relative;overflow:hidden;}
+    .left::before{content:'';position:absolute;top:-20%;left:-10%;width:120%;height:80%;background:radial-gradient(ellipse at 40% 50%,rgba(200,241,53,0.05) 0%,transparent 60%);pointer-events:none;}
+    .left-in{position:relative;z-index:1;max-width:340px;}
+    .brand{display:flex;align-items:center;gap:8px;margin-bottom:36px;}
+    .brand img{height:30px;}
+    .brand span{font-weight:800;font-size:18px;}
+    .brand em{color:var(--lime);font-style:normal;}
+    .left h1{font-size:clamp(22px,3vw,34px);font-weight:800;letter-spacing:-0.5px;margin-bottom:10px;}
+    .left h1 em{color:var(--lime);font-style:normal;}
+    .left p{font-size:14px;color:var(--white2);margin-bottom:28px;line-height:1.6;}
+    .feats{display:flex;flex-direction:column;gap:8px;}
+    .feat{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--white2);}
+    .feat::before{content:'✓';color:var(--lime);font-weight:800;font-size:11px;flex-shrink:0;}
+    .right{width:400px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:28px 24px;background:var(--bg);}
+    .abox{width:100%;}
+    .atabs{display:flex;background:var(--s1);border-radius:var(--r);padding:3px;margin-bottom:20px;border:1px solid var(--border);}
+    .atab{flex:1;padding:9px;text-align:center;border:none;background:transparent;border-radius:6px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer;transition:var(--t);}
+    .atab.active{background:var(--s2);color:var(--white);}
+    .aform{display:none;}
+    .aform.active{display:block;}
+    .forgot{text-align:right;font-size:12px;color:var(--lime);font-weight:600;cursor:pointer;margin-top:-8px;margin-bottom:14px;display:block;}
+    .vbox{display:none;text-align:center;padding:8px 0;}
+    .vi{font-size:44px;margin-bottom:12px;}
+    .vbox h3{font-size:18px;font-weight:700;margin-bottom:8px;}
+    .vbox p{font-size:13px;color:var(--white2);line-height:1.6;}
+    .spam-warn{background:rgba(252,211,77,0.07);border:1px solid rgba(252,211,77,0.2);border-radius:var(--r);padding:9px 12px;font-size:12px;color:var(--yellow);margin:10px 0;text-align:left;}
+    @media(max-width:768px){body{flex-direction:column;}.left{display:none;}.right{width:100%;padding:28px 18px;min-height:100vh;align-items:flex-start;padding-top:36px;}}
+  </style>
+</head>
+<body>
+<div class="left">
+  <div class="left-in">
+    <div class="brand"><img src="logo.png" alt=""/>Pitch<em>Drop</em></div>
+    <h1>Cold emails that<br/><em>get replies</em></h1>
+    <p>4-stage AI pipeline turns any website into 3 personalized cold emails. Pay with USDT — works anywhere.</p>
+    <div class="feats">
+      <div class="feat">5 free email generations to start</div>
+      <div class="feat">Intelligence extraction + SDR reasoning</div>
+      <div class="feat">Real algorithmic scoring — not fake</div>
+      <div class="feat">Pay with USDT — no card needed</div>
+    </div>
+  </div>
+</div>
+<div class="right">
+  <div class="abox">
+    <div id="alertBox"></div>
+    <div class="atabs" id="atabs">
+      <button class="atab active" onclick="sw('signup')">Create account</button>
+      <button class="atab" onclick="sw('login')">Sign in</button>
+    </div>
+    <div class="aform active" id="signupForm">
+      <div class="field"><label>Full name</label><input type="text" id="sName" class="inp" placeholder="John Doe"/></div>
+      <div class="field"><label>Email</label><input type="email" id="sEmail" class="inp" placeholder="john@example.com"/></div>
+      <div class="field"><label>Password</label><div class="inp-wrap"><input type="password" id="sPass" class="inp" placeholder="Min 6 characters"/><button class="eye" onclick="tog('sPass',this)" type="button">👁</button></div></div>
+      <div class="field"><label>Confirm password</label><div class="inp-wrap"><input type="password" id="sConf" class="inp" placeholder="Repeat password"/><button class="eye" onclick="tog('sConf',this)" type="button">👁</button></div></div>
+      <button class="btn btn-lime btn-full btn-lg" onclick="doSignup()" id="signupBtn">Create free account →</button>
+      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;">By signing up you agree to our Terms of Service</p>
+    </div>
+    <div class="aform" id="loginForm">
+      <div class="field"><label>Email</label><input type="email" id="lEmail" class="inp" placeholder="john@example.com"/></div>
+      <div class="field"><label>Password</label><div class="inp-wrap"><input type="password" id="lPass" class="inp" placeholder="Your password"/><button class="eye" onclick="tog('lPass',this)" type="button">👁</button></div></div>
+      <span class="forgot" onclick="doForgot()">Forgot password?</span>
+      <button class="btn btn-lime btn-full btn-lg" onclick="doLogin()" id="loginBtn">Sign in →</button>
+    </div>
+    <div class="vbox" id="vbox">
+      <div class="vi">📧</div>
+      <h3>Check your inbox!</h3>
+      <p>We sent a confirmation link. Click it to activate your account.</p>
+      <div class="spam-warn">⚠️ <strong>Check spam folder</strong> if not seen in 2 minutes.</div>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">Missing? <span style="color:var(--lime);cursor:pointer;font-weight:600;" onclick="resend()">Resend</span></p>
+      <br/><button class="btn btn-ghost btn-full" onclick="sw('login')">Go to sign in</button>
+    </div>
+  </div>
+</div>
+<script type="module">
+  import { supabase, FREE_CREDITS } from './supabase.js';
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) window.location.href = 'dashboard.html';
+
+  window.tog = (id, btn) => { const i = document.getElementById(id); i.type = i.type === 'password' ? 'text' : 'password'; btn.textContent = i.type === 'password' ? '👁' : '🙈'; };
+  window.sw = (tab) => {
+    ['signup','login'].forEach(t => document.getElementById(t+'Form').classList.toggle('active', t===tab));
+    document.querySelectorAll('.atab').forEach((t,i) => t.classList.toggle('active', (tab==='signup'&&i===0)||(tab==='login'&&i===1)));
+    document.getElementById('vbox').style.display='none'; document.getElementById('atabs').style.display='flex'; clearAlert();
+  };
+  window.doSignup = async () => {
+    const name=document.getElementById('sName').value.trim(), email=document.getElementById('sEmail').value.trim(), pass=document.getElementById('sPass').value, conf=document.getElementById('sConf').value;
+    const btn=document.getElementById('signupBtn');
+    if (!name||!email||!pass||!conf) return showAlert('Please fill in all fields.','error');
+    if (pass.length<6) return showAlert('Password must be at least 6 characters.','error');
+    if (pass!==conf) return showAlert('Passwords do not match.','error');
+    btn.disabled=true; btn.innerHTML='<span class="spin"></span> Creating...';
+    try {
+      const {data,error} = await supabase.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+      if (error) throw error;
+      if (data.user) await supabase.from('users').upsert({id:data.user.id,name,email,plan:'free',credits:FREE_CREDITS,credits_used:0,generation_count:0,preferences:null,preference_count:0,suspended:false},{onConflict:'id',ignoreDuplicates:true});
+      document.getElementById('signupForm').classList.remove('active');
+      document.getElementById('atabs').style.display='none';
+      document.getElementById('vbox').style.display='block';
+    } catch(e) { showAlert(friendly(e.message),'error'); btn.disabled=false; btn.innerHTML='Create free account →'; }
+  };
+  window.doLogin = async () => {
+    const email=document.getElementById('lEmail').value.trim(), pass=document.getElementById('lPass').value;
+    const btn=document.getElementById('loginBtn');
+    if (!email||!pass) return showAlert('Please fill in all fields.','error');
+    btn.disabled=true; btn.innerHTML='<span class="spin"></span> Signing in...';
+    try {
+      const {data,error} = await supabase.auth.signInWithPassword({email,password:pass});
+      if (error) throw error;
+      const {data:ud} = await supabase.from('users').select('suspended').eq('id',data.user.id).single();
+      if (ud?.suspended) { await supabase.auth.signOut(); throw new Error('Account suspended. Contact support.'); }
+      await supabase.from('users').upsert({id:data.user.id,name:data.user.user_metadata?.full_name||email.split('@')[0],email,plan:'free',credits:FREE_CREDITS,credits_used:0,generation_count:0,preferences:null,preference_count:0,suspended:false},{onConflict:'id',ignoreDuplicates:true});
+      window.location.href='dashboard.html';
+    } catch(e) { showAlert(friendly(e.message),'error'); btn.disabled=false; btn.innerHTML='Sign in →'; }
+  };
+  window.doForgot = async () => {
+    const email=document.getElementById('lEmail').value.trim();
+    if (!email) return showAlert('Enter your email first.','error');
+    const {error} = await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/auth.html'});
+    if (error) showAlert(error.message,'error'); else showAlert('Reset email sent! Check your inbox.','success');
+  };
+  window.resend = async () => { const e=document.getElementById('sEmail').value.trim(); if (e) await supabase.auth.resend({type:'signup',email:e}); showAlert('Resent!','success'); };
+  function showAlert(msg,type){document.getElementById('alertBox').innerHTML=`<div class="alert alert-${type}">${msg}</div>`;}
+  function clearAlert(){document.getElementById('alertBox').innerHTML='';}
+  function friendly(msg){if(!msg)return 'Something went wrong.';if(msg.includes('already registered')||msg.includes('already been registered'))return 'Email already registered. Try signing in.';if(msg.includes('Invalid login'))return 'Wrong email or password.';if(msg.includes('Email not confirmed'))return 'Please confirm your email first.';return msg;}
+</script>
+</body>
+</html>

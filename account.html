@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PitchDrop — Account</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="logo.png"/>
+  <style>
+    .page{max-width:600px;margin:0 auto;padding:20px 16px 60px;}
+    .sec{background:var(--s1);border:1px solid var(--border);border-radius:var(--r3);padding:18px;margin-bottom:12px;}
+    .sec-head{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+    .irow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--s2);font-size:13px;flex-wrap:wrap;gap:6px;}
+    .irow:last-child{border-bottom:none;}
+    .il{color:var(--muted);}
+    .iv{color:var(--white);font-weight:600;}
+    .pref-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--s2);font-size:13px;flex-wrap:wrap;gap:4px;}
+    .pref-row:last-child{border-bottom:none;}
+    .pay-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--s2);flex-wrap:wrap;gap:6px;}
+    .pay-row:last-child{border-bottom:none;}
+    .danger{background:rgba(248,113,113,0.03);border:1px solid rgba(248,113,113,0.15);border-radius:var(--r3);padding:18px;}
+    .danger-head{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;}
+    .d-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+    .d-row p{font-size:12px;color:var(--muted);margin-top:2px;}
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="dashboard.html" class="nav-brand"><img src="logo.png" alt=""/>Pitch<em>Drop</em></a>
+  <div class="nav-right">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="pricing.html" class="btn btn-lime btn-sm">Upgrade</a>
+    <a id="adminLink" href="admin.html" style="display:none;color:var(--red);font-weight:700;">Admin</a>
+    <a href="#" onclick="doLogout()" style="color:var(--muted);">Logout</a>
+  </div>
+</nav>
+<div class="page">
+  <h1 style="font-size:17px;font-weight:700;margin-bottom:16px;">⚙️ Account Settings</h1>
+  <div id="alertBox"></div>
+  <div class="sec">
+    <div class="sec-head">👤 Profile</div>
+    <div class="irow"><span class="il">Name</span><span class="iv" id="pName">—</span></div>
+    <div class="irow"><span class="il">Email</span><span class="iv" id="pEmail">—</span></div>
+    <div class="irow"><span class="il">Member since</span><span class="iv" id="pDate">—</span></div>
+  </div>
+  <div class="sec">
+    <div class="sec-head">💎 Subscription</div>
+    <div class="irow"><span class="il">Plan</span><span class="iv" id="sPlan">—</span></div>
+    <div class="irow"><span class="il">Credits remaining</span><span class="iv" id="sCreds" style="color:var(--lime);">—</span></div>
+    <div class="irow"><span class="il">Total generated</span><span class="iv" id="sTotal">—</span></div>
+    <br/><a href="pricing.html" class="btn btn-lime btn-sm">🚀 Upgrade plan</a>
+  </div>
+  <div class="sec">
+    <div class="sec-head">🧠 Saved Preferences</div>
+    <div id="prefsContent"><p style="font-size:13px;color:var(--muted);">No preferences saved yet.</p></div>
+    <br/><button class="btn btn-outline btn-sm" id="resetBtn" style="display:none;" onclick="resetPrefs()">🔄 Reset preferences</button>
+  </div>
+  <div class="sec">
+    <div class="sec-head">💳 Payment History</div>
+    <div id="payHistory"><p style="font-size:13px;color:var(--muted);">No payments yet.</p></div>
+  </div>
+  <div class="sec">
+    <div class="sec-head">🔐 Change Password</div>
+    <div class="field"><label>New password</label><div class="inp-wrap"><input type="password" id="np" class="inp" placeholder="Min 6 characters"/><button class="eye" onclick="tog('np',this)" type="button">👁</button></div></div>
+    <div class="field"><label>Confirm password</label><div class="inp-wrap"><input type="password" id="cp" class="inp" placeholder="Repeat"/><button class="eye" onclick="tog('cp',this)" type="button">👁</button></div></div>
+    <button class="btn btn-ghost" onclick="changePass()">Update password</button>
+  </div>
+  <div class="danger">
+    <div class="danger-head">⚠️ Danger Zone</div>
+    <div class="d-row">
+      <div><strong style="font-size:13px;color:var(--white);">Delete Account</strong><p>Permanently deletes everything. Cannot be undone.</p></div>
+      <button class="btn btn-danger btn-sm" onclick="delAccount()">Delete</button>
+    </div>
+  </div>
+</div>
+<script type="module">
+  import { supabase, isAdmin } from './supabase.js';
+  window.tog=(id,btn)=>{const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁':'🙈';};
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session){window.location.href='auth.html';}
+  const cu=session.user;
+  if(isAdmin(cu.email)) document.getElementById('adminLink').style.display='inline';
+  await load();
+  async function load(){
+    const {data:ud}=await supabase.from('users').select('*').eq('id',cu.id).single();
+    if(!ud) return;
+    document.getElementById('pName').textContent=ud.name||'—';
+    document.getElementById('pEmail').textContent=ud.email||'—';
+    document.getElementById('pDate').textContent=ud.created_at?new Date(ud.created_at).toLocaleDateString():'—';
+    document.getElementById('sPlan').textContent=cap(ud.plan)+' Plan';
+    document.getElementById('sCreds').textContent=ud.credits>=999999?'Unlimited':ud.credits||'0';
+    document.getElementById('sTotal').textContent=ud.generation_count||'0';
+    if(ud.preferences&&(ud.preference_count||0)>=3){
+      const p=ud.preferences;
+      document.getElementById('prefsContent').innerHTML=['Selling','Goal','Tone','Length','Role'].map((l,i)=>{const k=['selling','goal','tone','length','role'];return`<div class="pref-row"><span style="color:var(--muted)">${l}</span><span style="color:var(--lime);font-weight:600">${p[k[i]]||'—'}</span></div>`;}).join('');
+      document.getElementById('resetBtn').style.display='inline-flex';
+    }
+    const {data:pays}=await supabase.from('payments').select('*').eq('user_id',cu.id).order('created_at',{ascending:false});
+    if(pays?.length) document.getElementById('payHistory').innerHTML=pays.map(p=>`<div class="pay-row"><div><strong style="color:var(--white);font-size:13px">${cap(p.plan)} Plan</strong><div style="font-size:11px;color:var(--muted)">${new Date(p.created_at).toLocaleDateString()}</div></div><div style="display:flex;align-items:center;gap:8px"><strong style="color:var(--lime)">${p.amount} USDT</strong><span class="badge badge-green">${p.status}</span></div></div>`).join('');
+  }
+  window.resetPrefs=async()=>{if(!confirm('Reset preferences?'))return;await supabase.from('users').update({preferences:null,preference_count:0}).eq('id',cu.id);showAlert('Preferences reset!','success');load();};
+  window.changePass=async()=>{const np=document.getElementById('np').value,cp=document.getElementById('cp').value;if(!np||!cp)return showAlert('Fill in both fields','error');if(np.length<6)return showAlert('Min 6 characters','error');if(np!==cp)return showAlert('Passwords do not match','error');const{error}=await supabase.auth.updateUser({password:np});if(error)showAlert(error.message,'error');else{showAlert('Password updated!','success');document.getElementById('np').value='';document.getElementById('cp').value='';}};
+  window.delAccount=async()=>{if(!confirm('Delete permanently?'))return;if(!confirm('All data lost forever. Continue?'))return;await supabase.from('users').delete().eq('id',cu.id);await supabase.auth.signOut();window.location.href='index.html';};
+  window.doLogout=async()=>{await supabase.auth.signOut();window.location.href='auth.html';};
+  function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
+  function showAlert(msg,type){document.getElementById('alertBox').innerHTML=`<div class="alert alert-${type}">${msg}</div>`;setTimeout(()=>document.getElementById('alertBox').innerHTML='',4000);}
+</script>
+</body>
+</html>
