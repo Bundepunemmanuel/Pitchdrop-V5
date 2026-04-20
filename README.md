@@ -134,7 +134,7 @@ Vercel → your project → Settings → Environment Variables → Add each one:
 
 | Variable Name | Value |
 |---|---|
-| GROQ_API_KEY | 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 |
+| GROQ_API_KEY | ************|
 | NOWPAYMENTS_API_KEY | RNK4YXD-VZAMNHV-PYG4ZPK-JM6NCQD |
 | SITE_URL | https://your-vercel-url.vercel.app |
 | SUPABASE_URL | https://dcbwcxejjxuloanbygfw.supabase.co |
