@@ -237,6 +237,7 @@
     const url = document.getElementById('prospectUrl').value.trim();
     if (!url) return toast('Please paste a prospect URL','error');
     if (!url.startsWith('http')) return toast('URL must start with https://','error');
+    if (url.includes('linkedin.com')) return toast('LinkedIn URLs not supported. Paste their company website instead e.g. https://company.com','error');
     if ((ud?.credits||0)<=0) { window.location.href='pricing.html'; return; }
     if (ud?.preferences && (ud?.preference_count||0)>=3) { startGen(url, ud.preferences); }
     else { document.getElementById('lockedUrl').textContent=url; document.getElementById('step1').style.display='none'; document.getElementById('step2').style.display='block'; }
@@ -314,100 +315,4 @@
     const bd = v.scoreBreakdown;
     return `
       <div class="score-sum">
-        <span class="score-big score-${sc}">${v.replyScore}</span>
-        <span style="font-size:13px;color:var(--muted);">/100</span>
-        <span class="badge ${v.spamSafe?'badge-green':'badge-red'}">${v.spamSafe?'🛡️ Spam safe':'⚠️ Spam risk'}</span>
-      </div>
-      <button class="score-toggle" onclick="toggleScore(${i})">📊 Score breakdown ▾</button>
-      <div class="score-body" id="sb${i}">
-        <div class="sbars mt-8">
-          ${[['Personalization',bd?.personalization,30],['Spam safety',bd?.spamSafety,20],['Human patterns',bd?.humanPatterns,15],['Length vs goal',bd?.lengthVsGoal,20],['Subject strength',bd?.subjectStrength,15]].map(([l,vv,max])=>`
-            <div class="sbar"><div class="sbar-n">${l}</div><div class="sbar-t"><div class="sbar-f" style="width:${((vv||0)/max)*100}%"></div></div><div class="sbar-v">${vv||0}/${max}</div></div>`).join('')}
-        </div>
-        ${bd?.note?`<div class="score-note">${bd.note}</div>`:''}
-        ${v.benchmarkNote?`<div class="bench-note">📈 ${v.benchmarkNote}</div>`:''}
-      </div>
-      <div class="divider"></div>
-      <div class="sec-label mb-8">Subject lines</div>
-      ${v.subjects.map(s=>`<div class="sub-row"><span>${s}</span><button class="btn btn-ghost btn-sm" onclick="copyTxt('${s.replace(/'/g,"\\'").replace(/"/g,'\\"')}')">Copy</button></div>`).join('')}
-      <div class="sec-label mt-12 mb-8">Email body</div>
-      <div class="email-box" id="eb${i}" contenteditable="false">${v.body.replace(/\n/g,'<br/>')}</div>
-      <div class="email-actions">
-        <button class="btn btn-lime btn-sm" onclick="copyEmail(${i})">📋 Copy</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleEdit(${i})" id="editBtn${i}">✏️ Edit</button>
-        <button class="btn btn-ghost btn-sm" onclick="openShare(${i})">📤 Share</button>
-        <button class="btn btn-ghost btn-sm" onclick="openFu(${i})">📨 Follow up</button>
-      </div>`;
-  }
-
-  window.switchV = (i) => { activeV=i; document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i)); document.querySelectorAll('.vcontent').forEach((c,j)=>c.classList.toggle('active',j===i)); };
-  window.toggleScore = (i) => { document.getElementById(`sb${i}`)?.classList.toggle('open'); };
-  window.copyEmail = (i) => { navigator.clipboard.writeText(document.getElementById(`eb${i}`)?.innerText||''); toast('Copied!','success'); };
-  window.copyTxt = (t) => { navigator.clipboard.writeText(t); toast('Copied!','success'); };
-  window.toggleEdit = (i) => { const b=document.getElementById(`eb${i}`),btn=document.getElementById(`editBtn${i}`); const ed=b.contentEditable==='true'; b.contentEditable=ed?'false':'true'; btn.textContent=ed?'✏️ Edit':'💾 Done'; if(!ed)b.focus(); };
-
-  // SHARE
-  window.openShare = (i) => { shareIdx=i; document.getElementById('shareBd').classList.add('open'); document.getElementById('shareSheet').classList.add('open'); };
-  window.closeShare = () => { document.getElementById('shareBd').classList.remove('open'); document.getElementById('shareSheet').classList.remove('open'); };
-  function getShareText() { const v=variants[shareIdx]; return v?`Generated a ${v.replyScore}/100 reply-score cold email for ${curUrl} with PitchDrop 🔥\n\nSubject: "${v.subjects?.[0]}"\n\nTry free → ${window.location.origin}`:''; }
-  window.shareX = () => { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(getShareText().slice(0,280))}`,'_blank'); closeShare(); };
-  window.shareLI = () => { window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}`,'_blank'); closeShare(); };
-  window.shareTG = () => { window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(getShareText())}`,'_blank'); closeShare(); };
-  window.shareCopy = () => { navigator.clipboard.writeText(getShareText()); toast('Share text copied!','success'); closeShare(); };
-
-  // FOLLOW UP
-  window.openFu = (i) => { fuIdx=i; document.getElementById('fuResults').innerHTML=''; document.getElementById('fuOv').classList.add('open'); document.getElementById('fuPanel').classList.add('open'); };
-  window.closeFu = () => { document.getElementById('fuOv').classList.remove('open'); document.getElementById('fuPanel').classList.remove('open'); };
-  window.runFu = async () => {
-    const btn=document.getElementById('fuGenBtn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> Generating...';
-    const body=document.getElementById(`eb${fuIdx}`)?.innerText||'';
-    const days=document.getElementById('fuDays').value;
-    try {
-      const res=await fetch('/api/followup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({originalEmail:body,prospectUrl:curUrl,daysSince:parseInt(days),originalSubject:variants[fuIdx]?.subjects?.[0]||''})});
-      if(!res.ok) throw new Error('Failed');
-      const data=await res.json();
-      if(!data.success) throw new Error(data.error);
-      const fus=data.data.followups||[];
-      document.getElementById('fuResults').innerHTML=fus.map((f,i)=>`
-        <div class="card-sm mt-12">
-          <div class="sec-label mb-6">Follow-up ${i+1}${f.angle?' — '+f.angle:''}</div>
-          ${f.subjects.map(s=>`<div class="sub-row mb-6"><span>${s}</span><button class="btn btn-ghost btn-sm" onclick="copyTxt('${s.replace(/'/g,"\\'")}')">Copy</button></div>`).join('')}
-          <div class="email-box" style="min-height:60px;font-size:13px;">${(f.body||'').replace(/\n/g,'<br/>')}</div>
-          <button class="btn btn-lime btn-sm mt-8" onclick="copyTxt('${(f.body||'').replace(/'/g,"\\'").replace(/\n/g,'\\n')}')">📋 Copy</button>
-        </div>`).join('');
-    } catch(e) { document.getElementById('fuResults').innerHTML=`<div class="alert alert-error">${e.message}</div>`; }
-    btn.disabled=false; btn.innerHTML='Generate follow-up emails';
-  };
-
-  window.resetGen = () => {
-    document.getElementById('resultsSec').style.display='none'; document.getElementById('sigsSec').style.display='none';
-    document.getElementById('delivBox').style.display='none'; document.getElementById('lowSig').style.display='none';
-    document.getElementById('step2').style.display='none'; document.getElementById('step1').style.display='block';
-    document.getElementById('prospectUrl').value=''; checkPrefs();
-  };
-
-  function showLoading() { document.getElementById('step1').style.display='none'; document.getElementById('step2').style.display='none'; document.getElementById('resultsSec').style.display='none'; document.getElementById('loadingSec').style.display='block'; ['l1','l2','l3','l4'].forEach(s=>{const e=document.getElementById(s);if(e)e.className='lstep';}); document.getElementById('foundSigs').innerHTML=''; }
-  function hideLoading() { document.getElementById('loadingSec').style.display='none'; }
-
-  async function loadRecent() {
-    const {data} = await supabase.from('history').select('id,url,variants,created_at').eq('user_id',cu.id).order('created_at',{ascending:false}).limit(3);
-    const list=document.getElementById('recentList');
-    if (!data?.length) { list.innerHTML=`<div class="card-sm text-center" style="color:var(--muted);font-size:13px;">No emails yet. Generate your first one!</div>`; return; }
-    list.innerHTML=data.map(d=>{
-      const score=d.variants?.[0]?.replyScore||0; const sc=score>=80?'badge-green':score>=65?'badge-yellow':'badge-red';
-      return `<div class="hist-card"><div class="hist-top"><span class="hist-url">🔗 ${d.url}</span><div class="hist-meta"><span class="badge ${sc}">${score}/100</span><span style="font-size:11px;color:var(--muted);">${new Date(d.created_at).toLocaleDateString()}</span></div></div><div class="hist-preview">${(d.variants?.[0]?.body||'').replace(/<[^>]+>/g,'').slice(0,100)}...</div><div class="hist-actions"><a href="history.html" class="btn btn-ghost btn-sm">View all history →</a></div></div>`;
-    }).join('');
-  }
-
-  window.doLogout = async () => { await supabase.auth.signOut(); window.location.href='auth.html'; };
-  window.toast = (msg,type='info') => {
-    const ex=document.getElementById('_toast'); if(ex) ex.remove();
-    const el=document.createElement('div'); el.id='_toast';
-    el.style.cssText=`position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--border2);color:var(--white);padding:9px 18px;border-radius:var(--r2);font-size:13px;font-weight:500;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);`;
-    if(type==='error') el.style.borderColor='var(--red)'; if(type==='success') el.style.borderColor='var(--green)';
-    el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),3000);
-  };
-  function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
-</script>
-</body>
-</html>
+        <span 
