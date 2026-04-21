@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     if (!userId || !plan) return res.status(400).json({ error: 'userId and plan required' });
 
     // Updated prices — minimum $10 for NOWPayments
-    const PRICES = { starter: 10, pro: 20, lifetime: 99 };
+    const PRICES = { starter: 12, pro: 22, lifetime: 99 };
     const price = PRICES[plan];
     if (!price) return res.status(400).json({ error: 'Invalid plan. Use: starter, pro, or lifetime' });
 
