@@ -12,6 +12,13 @@ export default async function handler(req, res) {
     const { url, preferences, manualContext } = req.body;
     if (!url) return res.status(400).json({ error: 'URL is required' });
 
+    // Block LinkedIn URLs — pitchdrop cannot read LinkedIn, causes parse failures
+    if (url.includes('linkedin.com')) {
+      return res.status(400).json({
+        error: 'LinkedIn URLs are not supported. Please paste the company\'s actual website URL instead (e.g. https://theircompany.com). You can find it on their LinkedIn profile.'
+      });
+    }
+
     const selling = preferences?.selling || 'a B2B service';
     const goal = preferences?.goal || 'book a call';
     const length = preferences?.length || 'Short';
@@ -198,13 +205,27 @@ Structure: counterintuitive opener → connect to their situation → ask
 Return ONLY valid JSON starting with {:
 {"variants":[{"type":"Professional","body":"email with \\n for line breaks"},{"type":"Casual","body":"email with \\n for line breaks"},{"type":"Bold","body":"email with \\n for line breaks"}]}`;
 
-    const s3raw = await groq(s3, 1200, 0.82);
+    const s3raw = await groq(s3, 1600, 0.80);
     let emailData;
     try {
       const c = s3raw.replace(/```json|```/g, '').trim();
-      emailData = JSON.parse(c.slice(c.indexOf('{'), c.lastIndexOf('}') + 1));
+      // Find the JSON — be aggressive about recovery
+      const start = c.indexOf('{"variants"');
+      const end = c.lastIndexOf('}]}');
+      if (start !== -1 && end !== -1) {
+        emailData = JSON.parse(c.slice(start, end + 3));
+      } else {
+        emailData = JSON.parse(c.slice(c.indexOf('{'), c.lastIndexOf('}') + 1));
+      }
     } catch (_) {
-      throw new Error('Email generation failed to parse. Please try again.');
+      // Last resort: retry once with lower temperature for more reliable JSON
+      try {
+        const retry = await groq(s3 + '\n\nIMPORTANT: Return ONLY the JSON object. Nothing else. Start with { and end with }', 1400, 0.5);
+        const c2 = retry.replace(/```json|```/g, '').trim();
+        emailData = JSON.parse(c2.slice(c2.indexOf('{'), c2.lastIndexOf('}') + 1));
+      } catch (_2) {
+        throw new Error('Email generation failed. Please try again.');
+      }
     }
     if (!emailData?.variants || emailData.variants.length < 3) throw new Error('Incomplete generation. Please try again.');
 
@@ -315,5 +336,5 @@ async function groq(prompt, maxTokens, temp) {
   const t = d.choices?.[0]?.message?.content?.trim();
   if (!t) throw new Error('Empty AI response. Please try again.');
   return t;
-}
-
+  }
+    
